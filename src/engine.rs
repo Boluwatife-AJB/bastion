@@ -11,6 +11,7 @@ use crate::http::pool::{build_hyper_client, PoolConfig};
 use crate::metrics::aggregator::Aggregator;
 use crate::metrics::collector::SharedProgress;
 use crate::metrics::event::RequestEvent;
+use crate::metrics::window::WindowSnapshot;
 use crate::worker::run_worker;
 use crate::metrics::snapshot::MetricsSnapshot;
 use crate::metrics::summary::summarize_windows;
@@ -22,7 +23,7 @@ const EVENT_CHANNEL_CAPACITY: usize = 8_192;
 
 const BROADCAST_CAPACITY: usize = 64;
 
-pub async fn run(config: Config) -> Result<MetricsSnapshot> {
+pub async fn run(config: Config) -> Result<(MetricsSnapshot, Vec<WindowSnapshot>)> {
   let config = Arc::new(config);
 
   print_run_summary(&config);
@@ -50,55 +51,6 @@ pub async fn run(config: Config) -> Result<MetricsSnapshot> {
   } else {
     None
   };
-
-  // let (tx, rx) = mpsc::channel(config.channel_capacity);
-
-  // let rx = Arc::new(tokio::sync::Mutex::new(rx));
-
-  // // Determine total for progress bar
-  // let total = match config.run_mode {
-  //   RunMode::RequestCount(n) => n,
-  //   RunMode::Duration(_) => u64::MAX,
-  // };
-
-  // // Progress bar setup
-  // let pb = setup_progress_bar(&config, total);
-  // let pb_clone = pb.clone();
-  // let progress_for_display = Arc::clone(&progress);
-  // let has_warmup = config.warmup.is_some();
-  // let total_for_display = total;
-
-
-  // let progress_task = tokio::spawn(async move {
-  //   let mut in_warmup = has_warmup;
-
-  //   loop {
-  //       let done = progress_for_display.completed.load(std::sync::atomic::Ordering::Relaxed);
-  //       let errors = progress_for_display.errors.load(std::sync::atomic::Ordering::Relaxed);
-  //       let warmup = progress_for_display.warmup_sent.load(std::sync::atomic::Ordering::Relaxed);
-
-  //       if in_warmup && warmup > 0 && done == 0 {
-  //         if let Some(ref pb) = pb_clone {
-  //           pb.set_message(format!("Warming up... {} requests sent", warmup));
-  //         }
-  //       } else {
-  //         in_warmup = false;
-  //         if let Some(ref pb) = pb_clone {
-  //           pb.set_position(done);
-  //           pb.set_message(format!("Errors: {errors}"));
-  //         }
-  //       }
-
-  //       if done >= total_for_display {
-  //         if let Some(ref pb) = pb_clone {
-  //           pb.finish_with_message("Completed");
-  //         }
-  //         break;
-  //       }
-  //       tokio::time::sleep(std::time::Duration::from_millis(100)).await;
-        
-  //     }
-  // });
 
   let progress_task = spawn_progress_updater(&config, Arc::clone(&progress));
 
@@ -156,7 +108,7 @@ pub async fn run(config: Config) -> Result<MetricsSnapshot> {
     summary, &window_history, total_duration
   );
 
-  Ok(snapshot)
+  Ok((snapshot, window_history))
 }
 
 // async fn run_worker_shared(worker_id: usize, config: Arc<Config>, client: Arc<BastionClient>, rx: Arc<tokio::sync::Mutex<mpsc::Receiver<crate::scheduler::WorkItem>>>, progress: Arc<SharedProgress>) -> crate::metrics::collector::WorkerMetrics {

@@ -56,10 +56,13 @@ pub struct Config {
   pub progress: bool,
   pub keep_alive: bool,
   pub follow_redirects: bool,
-  // pub duration: Option<Duration>,
   pub warmup: Option<Duration>,
   pub channel_capacity: usize,
   pub http2: bool,
+  pub assertions: Vec<String>,
+  pub compare: Option<String>,
+  pub regression_threshold: f64,
+  pub csv_file: Option<String>,
 }
 
 

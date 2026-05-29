@@ -4,6 +4,8 @@ use crate::metrics::snapshot::MetricsSnapshot;
 use humantime::format_duration;
 use crate::metrics::summary::RunSummary;
 use crate::metrics::window::WindowSnapshot;
+use crate::thresholds::{Threshold, ThresholdResult};
+use crate::compare::{ComparisonReport, VerdictStatus};
 
 pub fn print_report(snapshot: &MetricsSnapshot, config: &crate::config::Config) {
   use crate::config::RunMode;
@@ -233,6 +235,105 @@ pub fn print_spike_analysis(summary: &RunSummary, windows: &[WindowSnapshot]) {
       w.error_count
     );
   }  
+} 
+
+/// Print threshold assertion results
+pub fn print_thresholds(results: &[ThresholdResult]) {
+  use comfy_table::{Table, Cell, Attribute, Color};
+  use console::style;
+
+  println!();
+  println!(" {} Threshold Assertion Results", style("◆").cyan().bold());
+
+  let mut table = Table::new();
+  table.set_header(vec![
+    Cell::new("Metric").add_attribute(Attribute::Bold),
+    Cell::new("Expected").add_attribute(Attribute::Bold),
+    Cell::new("Actual").add_attribute(Attribute::Bold),
+    Cell::new("Result").add_attribute(Attribute::Bold),
+  ]);
+
+  for result in results {
+    let status_cell = if result.passed {
+      Cell::new("PASSED").fg(Color::Green)
+    } else {
+      Cell::new("FAILED").fg(Color::Red)
+    };
+
+    table.add_row(vec![
+      Cell::new(result.threshold.label()),
+      Cell::new(&result.expected),
+      Cell::new(&result.actual),
+      status_cell,
+    ]);
+  }
+
+  println!("{table}");
+
+  let failed = results.iter().filter(|r| !r.passed).count();
+  if failed > 0 {
+    println!("\n {} {}/{} assertion(s) failed", style("✕").red().bold(), failed, results.len());
+  } else {
+    println!("\n {} All {} assertion(s) passed", style("✓").green().bold(), results.len());
+  }
+}
+
+/// Print comparison report
+pub fn print_comparison(report: &ComparisonReport) {
+  use comfy_table::{Table, Cell, Attribute, Color};
+  use console::style;
+
+  println!();
+  println!("  {} Comparison vs Baseline", style("◆").cyan().bold());
+
+  let mut table = Table::new();
+  table.set_header(vec![
+    Cell::new("Metric").add_attribute(Attribute::Bold),
+    Cell::new("Baseline").add_attribute(Attribute::Bold),
+    Cell::new("Current").add_attribute(Attribute::Bold),
+    Cell::new("Δ").add_attribute(Attribute::Bold),
+    Cell::new("Status").add_attribute(Attribute::Bold),
+  ]);
+
+  for v in &report.verdicts {
+    let delta_str = if v.delta_pct >= 0.0 {
+      format!("+{:.1}%", v.delta_pct)
+    } else {
+      format!("{:.1}%", v.delta_pct)
+    };
+
+    let (delta_cell, status_cell) = match v.status {
+      VerdictStatus::Improved => (
+        Cell::new(delta_str).fg(Color::Green),
+        Cell::new("▲ improved").fg(Color::Green),
+      ),
+      VerdictStatus::Stable => (
+        Cell::new(delta_str).fg(Color::Yellow),
+        Cell::new("● stable").fg(Color::Yellow),
+      ),
+      VerdictStatus::Regressed => (
+        Cell::new(delta_str).fg(Color::Red),
+        Cell::new("▼ regressed").fg(Color::Red),
+      ),
+    };
+
+
+    table.add_row(vec![
+      Cell::new(&v.metric),
+      Cell::new(&v.baseline),
+      Cell::new(&v.current),
+      delta_cell,
+      status_cell,
+    ]);
+  }
+
+  println!("{table}");
+
+  if report.any_regression() {
+    println!("\n {} Performance regression detected", style("✕").red().bold());
+  } else {
+    println!("\n {} No regression detected", style("✓").green().bold());
+  }
 }
 
 fn fmt_duration(d: std::time::Duration) -> String {

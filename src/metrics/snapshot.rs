@@ -1,14 +1,14 @@
 use std::time::Duration;
 use std::collections::HashMap;
 
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 use crate::metrics::histogram::LatencyHistogram;
 use crate::metrics::collector::WorkerMetrics;
 use crate::metrics::summary::RunSummary;
 use crate::metrics::window::WindowSnapshot;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MetricsSnapshot {
   pub total_requests: u64,
   pub success_count: u64,
@@ -24,7 +24,7 @@ pub struct MetricsSnapshot {
   pub connections: ConnectionSnapshot,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LatencySnapshot {
   pub min: Duration,
   pub max: Duration,
@@ -59,7 +59,7 @@ impl LatencySnapshot {
   }
 }
 
-#[derive(Debug, Serialize, Default)]
+#[derive(Debug, Serialize, Default, Deserialize)]
 pub struct ConnectionSnapshot {
   pub new_connections: u64,
   pub http2_requests: u64,

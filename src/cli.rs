@@ -82,6 +82,26 @@ pub struct BastionCli {
   /// Enable HTTP/2 (negotiated via ALPN, requires server support)
   #[arg(long)]
   pub http2: bool,
+
+  /// Threshold assertions
+  #[arg(
+    long = "assert",
+    value_name = "THRESHOLD",
+    help = "Fail if threshold is violated (e.g. p99<200ms, error_rate>1%, rps>50)",
+  )]
+  pub assertions: Vec<String>,
+
+  /// Path to a baseline JSON report for comparison
+  #[arg(long, value_name = "FILE")]
+  pub compare: Option<String>,
+
+  /// Maximum regression allowed when comparing
+  #[arg(long, value_name = "FRACTION", default_value = "0.10")]
+  pub regression_threshold: f64,
+
+  /// Write per-second CSV time-series to this file
+  #[arg(long, value_name = "FILE")]
+  pub csv_file: Option<String>,
 }
 
 impl BastionCli {
@@ -129,6 +149,10 @@ impl BastionCli {
       warmup,
       channel_capacity: concurrency * 2,
       http2: self.http2,
+      assertions: self.assertions,
+      compare: self.compare,
+      regression_threshold: self.regression_threshold,
+      csv_file: self.csv_file,
     };
 
     config.validate()?;

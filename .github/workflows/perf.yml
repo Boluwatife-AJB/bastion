@@ -1,0 +1,44 @@
+name: Performance Gate
+
+on: [push, pull_request]
+
+jobs: 
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Bastion
+        run: cargo install --path .
+
+      - name: Start test server
+        run: python3 -m http.server 8000 &
+      
+      - name: Run baseline (on main branch artifact)
+        if: github.event_name == 'pull_request'
+        run: |
+          bastion -u http://localhost:8000 -n 500 -c 20 \
+            -0 json > /tmp/baseline.json
+      
+      - name: Run benchmark with assertions
+        run: |
+          bastion \
+            -u http://localhost:8000 \
+            -n 1000 -c 50 \
+            -assert "p99<200ms" \
+            -assert "error-rate<1%" \
+            -assert "rps>50" \
+            --compare /tmp/baseline.json \
+            --regression-threshold 0.15 \
+            -0 json --output-file results.json \
+            --csv-file results.csv
+          # exit code 1 if any assertion fails or regression detected
+      
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: |
+            results.json
+            results.csv
