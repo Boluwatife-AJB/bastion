@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, dev, staging] 
+  pull_request:
+    branches: [ main, staging] 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  fmt:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      
+      - name: Check formatting
+        run: cargo fmt --all --check
+
+  clippy:
+    name: Clippy Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "clippy"
+      
+      - name: Run Clippy
+        run: |
+          cargo clippy --all-targets --all-features -- \
+          -D warnings \
+          -W clippy::pedantic \
+          -A clippy::module_name_repetitions \
+          -A clippy::must_use_candidate \
+          -A clippy::missing_errors_doc \
+          -A clippy::missing_panics_doc \
+  
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "test-${{ matrix.os }}"
+      
+      - name: Build
+        run: cargo build --all-targets --all-features
+
+      - name: Run tests
+        run: cargo test --all-targets --all-features
+        env:
+          RUST_TEST_TIMEOUT: 120
+
+      - name: Run doc tests
+        run: cargo test --doc
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install cargo-audit
+        run: taiki-e/install-action@cargo-audit
+      
+      - name: Run audit
+        run: cargo audit
+        continue-on-error: false
+
+  deny:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install cargo-deny
+        run: taiki-e/install-action@cargo-deny
+      
+      - name: Check licenses and vulnerabilities
+        run: cargo deny check
+  
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
+      
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@cargo-llvm-cov
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+      
+      - name: Generate coverage
+        run: |
+          cargo llvm-cov \
+          --workspace \
+          --all-features \
+          --lcov \
+          --output-path lcov.info \
+        
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  ci: 
+    name: CI
+    if: always()
+    needs: [fmt, clippy, test, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
+        uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJson(needs) }}
