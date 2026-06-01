@@ -54,16 +54,27 @@ bytes = "1"
 tokio-stream = { version = "0.1.18", features = ["sync"]}
 futures = "0.3.32"
 crossterm = "0.29.0"
+parking_lot = "0.12.5"
 
 
 [dev-dependencies]
 wiremock = "0.6.5"
 tokio-test = "0.4.5"
-criterion = { version = "0.8", features = ["async_tokio"] }
+criterion = { version = "0.8", features = ["async_tokio", "html_reports"] }
+rand = "0.10.1"
+tempfile = "3.27.0"
 
-# [[bench]]
-# name = "histogram_bench"
-# harness = false
+[[bench]]
+name = "histogram"
+harness = false
+
+[[bench]]
+name = "metrics_pipeline"
+harness = false
+
+[[bench]]
+name = "json_serialization"
+harness = false
 
 [profile.release]
 opt-level = 3
@@ -71,6 +82,7 @@ lto = "fat"
 codegen-units = 1
 strip = true
 panic = "abort"
+debug = 1
 
 
 [profile.dev]
