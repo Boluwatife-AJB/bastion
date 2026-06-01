@@ -247,7 +247,7 @@ fn spawn_progress_updater(config: &Arc<Config>, progress: Arc<SharedProgress>) -
     if !show { return; }
     loop {
         let done = progress.completed.load(std::sync::atomic::Ordering::Relaxed);
-        let errors = progress.errors.load(std::sync::atomic::Ordering::Relaxed);
+        let _errors = progress.errors.load(std::sync::atomic::Ordering::Relaxed);
 
         if done >= total { break; }
         tokio::time::sleep(Duration::from_millis(100)).await;

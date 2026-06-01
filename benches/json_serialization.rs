@@ -15,8 +15,8 @@ fn make_windows(count: usize) -> Vec<WindowSnapshot> {
     bytes_received: 102400,
     new_connections: 0,
     p50: Duration::from_millis(38),
-    p50: Duration::from_millis(80),
-    p50: Duration::from_millis(150),
+    p90: Duration::from_millis(80),
+    p99: Duration::from_millis(150),
     mean: Duration::from_millis(45),
     ttfb_p99: Some(Duration::from_millis(30)),
   }).collect()
@@ -50,7 +50,7 @@ fn bench_json_serialization(c: &mut Criterion) {
   group.finish();
 }
 
-fn make_snapshot() -> bastion::metrics::snapshot::MetricSnapshot {
+fn make_snapshot() -> bastion::metrics::snapshot::MetricsSnapshot {
   use bastion::metrics::snapshot::*;
   MetricsSnapshot {
     total_requests: 10000,

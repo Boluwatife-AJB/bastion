@@ -28,7 +28,7 @@ fn bench_window_record(c: &mut Criterion) {
   });
 
   group.throughput(Throughput::Elements(1000));
-  group::bench_function("1000_events_per_window", |b| {
+  group.bench_function("1000_events_per_window", |b| {
     b.iter(|| {
       let mut window = MetricWindow::new(Instant::now(), Duration::from_secs(1));
       for ms in 0..1000u64 {
@@ -53,7 +53,7 @@ fn bench_window_record(c: &mut Criterion) {
 
 fn bench_window_snapshot(c: &mut Criterion) {
   c.bench_function("window_to_snapshot", |b| {
-    let mut widow = MetricWindow::new(Instant::now(), Duration::from_secs(1));
+    let mut window = MetricWindow::new(Instant::now(), Duration::from_secs(1));
     for ms in 0..1000u64 {
       let event = RequestEvent {
         completed_at: Instant::now(),

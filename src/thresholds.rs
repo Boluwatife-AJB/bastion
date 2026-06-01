@@ -4,10 +4,10 @@ use crate::error::{BastionError, Result};
 
 #[derive(Debug, Clone)]
 pub enum Threshold {
-  p99Lt(Duration),
-  p95Lt(Duration),
-  p90Lt(Duration),
-  p50Lt(Duration),
+  P99Lt(Duration),
+  P95Lt(Duration),
+  P90Lt(Duration),
+  P50Lt(Duration),
   MeanLt(Duration),
   ErrorRateLt(f64),
   RpsGt(f64),
@@ -24,7 +24,7 @@ pub struct ThresholdResult {
 impl Threshold {
     pub fn evaluate(self, snapshot: &MetricsSnapshot) -> ThresholdResult {
       match self {
-          Threshold::p99Lt(limit) => {
+          Threshold::P99Lt(limit) => {
             let actual = snapshot.latency.p99;
             ThresholdResult {
               passed: actual < limit,
@@ -33,7 +33,7 @@ impl Threshold {
               threshold: self.clone(),
             }
           }
-          Threshold::p95Lt(limit) => {
+          Threshold::P95Lt(limit) => {
             let actual = snapshot.latency.p95;
             ThresholdResult {
               passed: actual < limit,
@@ -42,7 +42,7 @@ impl Threshold {
               threshold: self.clone(),
             }
           }
-          Threshold::p90Lt(limit) => {
+          Threshold::P90Lt(limit) => {
             let actual = snapshot.latency.p90;
             ThresholdResult {
               passed: actual < limit,
@@ -51,7 +51,7 @@ impl Threshold {
               threshold: self.clone(),
             }
           }
-          Threshold::p50Lt(limit) => {
+          Threshold::P50Lt(limit) => {
             let actual = snapshot.latency.p50;
             ThresholdResult {
               passed: actual < limit,
@@ -93,10 +93,10 @@ impl Threshold {
 
     pub fn label(&self) -> &'static str {
       match self {
-        Threshold::p99Lt(_) => "p99 latency",
-        Threshold::p95Lt(_) => "p95 latency",
-        Threshold::p90Lt(_) => "p90 latency",
-        Threshold::p50Lt(_) => "p50 latency",
+        Threshold::P99Lt(_) => "p99 latency",
+        Threshold::P95Lt(_) => "p95 latency",
+        Threshold::P90Lt(_) => "p90 latency",
+        Threshold::P50Lt(_) => "p50 latency",
         Threshold::MeanLt(_) => "mean latency",
         Threshold::ErrorRateLt(_) => "error rate",
         Threshold::RpsGt(_) => "throughput",
@@ -109,16 +109,16 @@ pub fn parse_threshold(s: &str) -> Result<Threshold> {
 
   // Try each pattern
   if let Some(val) = s.strip_prefix("p99<") {
-    return Ok(Threshold::p99Lt(parse_duration(val)?));
+    return Ok(Threshold::P99Lt(parse_duration(val)?));
   }
   if let Some(val) = s.strip_prefix("p95<") {
-    return Ok(Threshold::p95Lt(parse_duration(val)?));
+    return Ok(Threshold::P95Lt(parse_duration(val)?));
   }
   if let Some(val) = s.strip_prefix("p90<") {
-    return Ok(Threshold::p90Lt(parse_duration(val)?));
+    return Ok(Threshold::P90Lt(parse_duration(val)?));
   }
   if let Some(val) = s.strip_prefix("p50<") {
-    return Ok(Threshold::p50Lt(parse_duration(val)?));
+    return Ok(Threshold::P50Lt(parse_duration(val)?));
   }
   if let Some(val) = s.strip_prefix("mean<") {
     return Ok(Threshold::MeanLt(parse_duration(val)?));

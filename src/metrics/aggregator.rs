@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use tokio::sync::{broadcast, mpsc};
 use tokio::time::{self, MissedTickBehavior};
-use tracing::{debug, info, warn};
+use tracing::{debug, info};
 
 use crate::metrics::event::RequestEvent;
 use crate::metrics::window::{MetricWindow, WindowSnapshot};

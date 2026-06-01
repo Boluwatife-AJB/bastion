@@ -145,7 +145,7 @@ impl MetricsSnapshot {
 
   /// Builds full snapshot from the run summary and window history
   pub fn from_summary_and_windows(summary: RunSummary, windows: &[WindowSnapshot], total_duration: Duration) -> Self {
-    let mut status_counts = std::collections::HashMap::new();
+    let status_counts = std::collections::HashMap::new();
 
     let new_connections = windows.iter().map(|w| w.new_connections).sum();
     let total_requests = summary.total_requests;

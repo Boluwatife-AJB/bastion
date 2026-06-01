@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
-use tokio::time::{self, MissedTickBehavior};
+use tokio::time::{self};
 use governor::{Quota, RateLimiter, clock::DefaultClock, state::direct::NotKeyed, state::InMemoryState};
 use crate::config::{Config, RunMode};
 use tracing::{debug, info};

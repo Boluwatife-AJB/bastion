@@ -1,22 +1,23 @@
-use std::path::{self, Path};
+use std::path::Path;
 use std::process;
 
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
 use anyhow::Context;
+use bastion::{cli, config, engine, metrics, reporter, thresholds, compare, error};
 
-mod reporter;
-mod metrics;
-mod http;
-mod display;
-mod error;
-mod config;
-mod cli;
-mod worker;
-mod engine;
-mod scheduler;
-mod thresholds;
-mod compare;
+// mod reporter;
+// mod metrics;
+// mod http;
+// mod display;
+// mod error;
+// mod config;
+// mod cli;
+// mod worker;
+// mod engine;
+// mod scheduler;
+// mod thresholds;
+// mod compare;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -33,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
 
     let (snapshot, windows) = engine::run(config.clone()).await.context("Benchmark run failed")?;
 
-    let use_stderr_for_human = matches!(config.output_format, crate::config::OutputFormat::Json);
+    let _use_stderr_for_human = matches!(config.output_format, crate::config::OutputFormat::Json);
 
     // Terminal report
     if matches!(config.output_format, config::OutputFormat::Terminal) {

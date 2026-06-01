@@ -4,11 +4,10 @@ use crate::metrics::snapshot::MetricsSnapshot;
 use humantime::format_duration;
 use crate::metrics::summary::RunSummary;
 use crate::metrics::window::WindowSnapshot;
-use crate::thresholds::{Threshold, ThresholdResult};
+use crate::thresholds::ThresholdResult;
 use crate::compare::{ComparisonReport, VerdictStatus};
 
 pub fn print_report(snapshot: &MetricsSnapshot, config: &crate::config::Config) {
-  use crate::config::RunMode;
 
   println!();
 

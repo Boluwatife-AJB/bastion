@@ -5,15 +5,14 @@ use bytes::Bytes;
 use http_body_util::BodyExt;
 use tokio::sync::mpsc;
 
-use crate::config::{Config, HttpMethod};
+use crate::config::Config;
 use crate::http::pool::BastionClient;
 use crate::http::request::build_request;
-use crate::http::timing::{HttpProtocol, RequestTiming};
+use crate::http::timing::HttpProtocol;
 use crate::metrics::collector::SharedProgress;
 use crate::metrics::event::RequestEvent;
 use crate::scheduler::WorkItem;
-use crate::error::Result;
-use tracing::{debug, warn};
+use tracing::warn;
 
 pub async fn run_worker(worker_id: usize, config: Arc<Config>,
     client: Arc<BastionClient>,

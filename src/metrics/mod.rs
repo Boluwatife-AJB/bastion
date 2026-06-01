@@ -1,4 +1,4 @@
-mod histogram;
+pub mod histogram;
 pub mod collector;
 pub mod snapshot;
 pub mod event;
